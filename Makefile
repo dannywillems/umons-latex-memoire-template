@@ -5,10 +5,21 @@ include Makefile.config
 ##### Shell
 SHELL		= /bin/bash
 
+##### Current directory. it's the directory containing the makefile.
+CURRENT_DIR = $(shell pwd)
+
 ##### Compilers
 PDFLATEX	= pdflatex
 DVILUATEX	= dviluatex
 BIBTEX		= bibtex
+
+CC_WITH_OPTIONS = \
+    TEXINPUTS="$(SRC_DIR):$(RES_DIR):$(THEME_DIR):" \
+    TEXMFOUTPUTS="$(OUTPUT_DIR)" \
+    $(CC) \
+    -output-directory=$(OUTPUT_DIR) \
+    --shell-escape
+
 ################################################################################
 
 ################################################################################
@@ -16,33 +27,38 @@ BIBTEX		= bibtex
 all: $(NAME)
 
 $(OUTPUT_DIR):
-	mkdir -p $(OUTPUT_DIR)
+	mkdir -p $@
 
-$(NAME): $(OUTPUT_DIR)
-	TEXINPUTS="$(SRC_DIR):" $(CC) -output-directory $(OUTPUT_DIR) \
-                                 $(SRC_DIR)/$(NAME)
+$(NAME): $(OUTPUT_DIR) clean-symlink
+	$(CC_WITH_OPTIONS) $@.tex
 ifeq ($(USE_BIB),true)
-	BIBINPUTS="$(SRC_DIR):" \
-    BSTINPUT="$(SRC_DIR):" \
-    TEXMFOUTPUTS="$(OUTPUT_DIR):" \
-    $(CC_BIB) $(OUTPUT_DIR)/$(NAME)
-	TEXINPUTS="$(SRC_DIR):" $(CC) -output-directory $(OUTPUT_DIR) \
-                                 $(SRC_DIR)/$(NAME)
+	cd $(OUTPUT_DIR) && \
+    BIBINPUTS="$(CURRENT_DIR)/$(BIB_DIR)" \
+    BSTINPUT="$(CURRENT_DIR)/$(BIB_DIR)" \
+    TEXMFOUTPUTS="./" \
+    $(CC_BIB) \
+    $(NAME) && \
+    cd $(CURRENT_DIR)
+	$(CC_WITH_OPTIONS) $@.tex
 else
 endif
-	TEXINPUTS="$(SRC_DIR):" $(CC) -output-directory $(OUTPUT_DIR) \
-                                 $(SRC_DIR)/$(NAME)
+	$(CC_WITH_OPTIONS) $@.tex
+	ln -s $(OUTPUT_DIR)/$@.pdf $(CURRENT_DIR)/$@.pdf
 
 zip: fclean $(NAME)
 	$(MAKE) clean
 	zip -r $(NAME).zip $(OUTPUT_DIR)/* -x *.git*
 
+clean-symlink:
+	-$(RM) $(CURRENT_DIR)/$(NAME).pdf
+
 clean:
 	$(RM) $(OUTPUT_DIR)/$(NAME).{out,aux,toc,log,tex.backup,nav,snm,bbl,blg}
+	$(RM) $(OUTPUT_DIR)/texput.log
 
 # $(OUTPUT_DIR) is only removed when the directory is empty (never be the case
 # if it's the project root directory).
-fclean: clean
+fclean: clean clean-symlink
 	$(RM) $(OUTPUT_DIR)/$(NAME).{pdf,zip,dvi}
 	-rmdir $(OUTPUT_DIR)
 
