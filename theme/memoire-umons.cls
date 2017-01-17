@@ -147,12 +147,14 @@
 \newcommand{\directeur}[1]{%
   \def\@directeur{#1}%
   \def\@directeur@name{\memoire@directeur}}
+\def\@directeurs{}
 \newcommand{\directeurs}[1]{%
-  \def\@directeur{#1}%
-  \def\@directeur@name{\memoire@directeurs}}
+  \def\@directeurs{#1}%
+  \def\@directeurs@name{\memoire@directeurs}}
+\def\@codirecteurs{}
 \newcommand{\codirecteurs}[1]{%
-  \def\@directeur{#1}%
-  \def\@directeur@name{\memoire@codirecteurs}}
+  \def\@codirecteurs{#1}%
+  \def\@codirecteurs@name{\memoire@codirecteurs}}
 \def\umons@service{}
 \newcommand{\service}[1]{%
   \def\umons@service{#1}%
@@ -166,6 +168,8 @@
 \newcommand{\institut}[1]{\def\@institut{#1}}
 \def\@date{}
 
+% Commande pour afficher une erreur à la compilation si une variable n'est pas
+% donnée.
 \newcommand{\umons@notempty}[3]{{%
     \def\\{}% (locally)
     \ifx #1\empty \PackageError{memoire-umons}{%
@@ -180,7 +184,7 @@
 \renewcommand{\maketitle}{%
   % Checks:
   \umons@notempty{\@directeur}{directeur}{\directeur}%
-  %\umons@notempty{\@rapporteurs}{rapporteurs}{\rapporteurs}%
+  \umons@notempty{\@rapporteurs}{rapporteurs}{\rapporteurs}%
   \umons@notempty{\umons@service}{service}{\service}%
   \umons@notempty{\@date}{d'annee academique}{\date}%
   \begin{titlepage}
@@ -225,9 +229,15 @@
       \vfill
       \null\hfill
       \begin{tabular}[t]{@{}r@{ }l@{}}
-        \textbf{\@directeur@name :}&
+        \textbf{\@directeur@name : }&
         \begin{tabular}[t]{@{}l@{}} \@directeur \end{tabular}%
         \\[2\jot]
+        % Facultatif:        
+        \ifx \@codirecteurs\empty \else
+        \textbf{\memoire@codirecteurs :}&
+        \begin{tabular}[t]{@{}l@{}} \@codirecteurs \end{tabular}%
+        \\[2\jot]
+        \fi
         \textbf{\@service@name :}&
         \begin{tabular}[t]{@{}l@{}} \umons@service \end{tabular}%
         \\[2\jot]
